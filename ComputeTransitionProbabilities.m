@@ -98,9 +98,60 @@ for h=1:H
     end
     
 end
-bar3(Pr_gc)   
-        
+figure
+bar3(Pr_gc)  
 
+Pr_tp = zeros(M,N);
+for f=1:F
+    n=mansion(f,1);
+    m=mansion(f,2);
+    gamma=gamma_p;
+    ind = true;
+    m1=m;
+    while(ind&&m1>1)
+        m1=m1-1;
+        m1
+        n
+        if map(m1,n)>0
+            ind = false;
+        else
+            Pr_tp(m1,n)=gamma/(abs(m1-m));
+        end
+    end
+    ind=true;
+    m2=m;
+    while(ind&&m2<M)
+        m2=m2+1;
+        if map(m2,n)>0
+            ind = false;
+        else
+            Pr_tp(m2,n)=gamma/(abs(m2-m));
+        end
+    end
+    ind = true;
+    n1=n;
+    while(ind&&n1>1)
+        n1=n1-1;
+        if map(m,n1)>0
+            ind = false;
+        else
+            Pr_tp(m,n1)=gamma/(abs(n-n1));
+        end
+    end
+    ind=true;
+    n2=n;
+    while(ind&&n2<N)
+        n2=n2+1;
+        if map(m,n2)>0
+            ind = false;
+        else
+            Pr_tp(m,n2)=gamma/(abs(n2-n));
+        end
+    end
+    
+end       
+figure 
+bar3(Pr_tp)
 
 
 
