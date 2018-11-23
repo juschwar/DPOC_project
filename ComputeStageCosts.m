@@ -93,7 +93,8 @@ for k=1:K
     %The Probability of staying at the current state is 1 - the probability
     %of taking a picture and finishing the task - The probability of
     %getting caught.
-    G(k,5) = G(k,5)+P(k,k)*1.0;
+    G(k,5) = G(k,5)+P(k,k,5)*1.0;
+    G(k,5) = G(k,5)+(1-P(k,k,5)-P(k,gate_idx,5))*0;
 end
 
 

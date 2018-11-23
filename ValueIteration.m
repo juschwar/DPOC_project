@@ -30,5 +30,26 @@ function [ J_opt, u_opt_ind ] = ValueIteration( P, G )
 %       	input for each element of the state space.
 
 % put your code here
+[K, L] = size(G);
+V1 = zeros(L,1);
+V = zeros(K,1);
+u_opt_ind = zeros(K,1);
+error = 100;
+eps = 1e-5;
+while(error>eps)
+    V_old = V;
+    for k1=1:K
+        for l = 1:L
+            V1(l) = G(k1,l);
+            for k2=1:K
+                V1(l) = V1(l) + P(k1,k2,l)*V(k2);
+            end
+        end
+        [V(k1), u_opt_ind(k1)] = min(V1);
+    end
+    [error, I] = max(V-V_old);      
+end
+J_opt = V;
+
 
 end

@@ -189,7 +189,14 @@ end
 %The transition probabilities have to sum to one if there is no possibility
 %to finish the task. As we can transist to the terminal state when we take
 %a picture this does not hold for the control input 5.
+if(sum(sum(P(:,:,1),2).*sum(P(:,:,2),2).*sum(P(:,:,3),2).*sum(P(:,:,4),2)<1)>0)
+    save('errorMap.mat',map);
+    save('errorP.mat',map);
+    save('errorSs.mat',stateSpace);
+end
+    
 assert(sum(sum(P(:,:,1),2).*sum(P(:,:,2),2).*sum(P(:,:,3),2).*sum(P(:,:,4),2)<1)==0)
+
 %All Probabilities have to be greater than 0
 assert(sum((P(:,:,1)>=0).*(P(:,:,2)>=0).*(P(:,:,3)>=0).*(P(:,:,4)>=0)<1,'all')==0)
 
