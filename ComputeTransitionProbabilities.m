@@ -80,18 +80,18 @@ for h=1:H
 end
 
 %Plot of the propabilities of getting caught by the cameras
-figure
-h=bar3(Pr_gc,1);  
-shading interp
-for i = 1:length(h)
-     zdata = get(h(i),'Zdata');
-     set(h(i),'Cdata',zdata)
-     set(h,'EdgeColor','k')
-end
-set(gca, 'Xdir', 'reverse')
-title('Probability of getting caught')
-xlabel x
-ylabel y
+% figure
+% h=bar3(Pr_gc,1);  
+% shading interp
+% for i = 1:length(h)
+%      zdata = get(h(i),'Zdata');
+%      set(h(i),'Cdata',zdata)
+%      set(h,'EdgeColor','k')
+% end
+% set(gca, 'Xdir', 'reverse')
+% title('Probability of getting caught')
+% xlabel x
+% ylabel y
 
 
 %Calculation of the probability of taking a picture of celebrity in the
@@ -125,18 +125,18 @@ for f=1:F
 end
 
 %Plot the probability of taking picture of the celebrity inside the mansion
-figure 
-h=bar3(Pr_tp,1);
-shading interp
-for i = 1:length(h)
-     zdata = get(h(i),'Zdata');
-     set(h(i),'Cdata',zdata)
-     set(h,'EdgeColor','k')
-end
-set(gca, 'Xdir', 'reverse')
-title('Probability of taking picture')
-xlabel x
-ylabel y
+% figure 
+% h=bar3(Pr_tp,1);
+% shading interp
+% for i = 1:length(h)
+%      zdata = get(h(i),'Zdata');
+%      set(h(i),'Cdata',zdata)
+%      set(h,'EdgeColor','k')
+% end
+% set(gca, 'Xdir', 'reverse')
+% title('Probability of taking picture')
+% xlabel x
+% ylabel y
 
 %Get Index of the gate in stateSpace
 [ind,gate_idx] = max(stateSpace(:,1)==gate(1)&stateSpace(:,2)==gate(2));
@@ -175,8 +175,8 @@ for k=1:K
         end
     end
     %In case the paparazzi takes a picture, the probability of getting
-    %caught is that of the cuurent state.
-    P(k,gate_idx,5) = Pr_gc(y1,x1);
+    %caught is that of the current state.
+    P(k,gate_idx,5) = Pr_gc(y1,x1)*(1-max(p_c,Pr_tp(y1,x1)));
     %The Probability of staying at the current state is 1 - the probability
     %of taking a picture and finishing the task - The probability of
     %getting caught.

@@ -90,11 +90,13 @@ for k=1:K
     %In case the paparazzi takes a picture, the probability of getting
     %caught is that of the current state.
     G(k,5) = G(k,5)+P(k,gate_idx,5)*(6+1);
+    G(k,gate_idx,5) = 6+1;
     %The Probability of staying at the current state is 1 - the probability
     %of taking a picture and finishing the task - The probability of
     %getting caught.
-    G(k,5) = G(k,5)+P(k,k)*1.0;
+    G(k,k,5) = 1;
 end
 
+G = squeeze(sum(P.*G,2));
 
 end
