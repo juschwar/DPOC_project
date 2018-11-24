@@ -43,7 +43,7 @@ function G = ComputeStageCosts( stateSpace, controlSpace, map, gate, mansion, ca
 %           apply control input l.
 
 % put your code here
-global pool_num_time_steps
+global pool_num_time_steps detected_additional_time_steps
 P = ComputeTransitionProbabilities( stateSpace, controlSpace, ...
         map, gate, mansion, cameras );
 K = length(stateSpace(:,1));
@@ -71,30 +71,32 @@ for k=1:K
             if(map(y2,x2)<0)
                 ts = pool_num_time_steps;
             end
-            %The probability of getting caught is 1 - the probability of
-            %not getting caught over all time steps
-            G(k,l) = G(k,l)+P(k,gate_idx,l)*(6+ts);
-            %In case the paparazzi does not get caught in the new state, he
-            %transists to the new state
+            %If we get caught this takes us additional timesteps. As we
+            %transist first to another cell before we get caught we also
+            %have the timesteps to transist to this next cell
+            G(k,l) = G(k,l)+P(k,gate_idx,l)*(detected_additional_time_steps+ts);
+            %In case the paparazzi does not get caught in the new state,
+            %this just takes us the timesteps to transist
             G(k,l) = G(k,l)+P(k,idx,l)*ts;
         else
             %In case the paparazzi wants to move n,w,s,e but the way is
-            %blocked he stays at the current state. And the probability of
-            %getting caught is that of the current state.
-            G(k,l) = G(k,l)+P(k,gate_idx,l)*(6+1);
+            %blocked he stays at the current state. If he gets caught this
+            %costs him again some timesteps
+            G(k,l) = G(k,l)+P(k,gate_idx,l)*(detected_additional_time_steps+1);
             %If the Paparazzi does not get caught, he just stays at the
-            %current state
+            %current state and this costs him 1 timestep
             G(k,l) = G(k,l)+P(k,k,l)*1.0;
         end
     end
-    %In case the paparazzi takes a picture, the probability of getting
-    %caught is that of the current state.
+    %In case the paparazzi takes a picture but the celebrity is not on the
+    %picture and he gets caught, this takes him the time to take the photo 
+    %plus the time to get to the gate
     G(k,5) = G(k,5)+P(k,gate_idx,5)*(6+1);
-    %The Probability of staying at the current state is 1 - the probability
-    %of taking a picture and finishing the task - The probability of
-    %getting caught.
+    %If the paparazzi takes a picture but the celebrity is not on the
+    %picture but he does not get caught either
     G(k,5) = G(k,5)+P(k,k,5)*1.0;
-    G(k,5) = G(k,5)+(1-P(k,k,5)-P(k,gate_idx,5))*0;
+    %If the paparazzi takes successfully a picture
+    G(k,5) = G(k,5)+(1-P(k,k,5)-P(k,gate_idx,5))*1;
 end
 
 

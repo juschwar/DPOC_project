@@ -30,6 +30,33 @@ function [ J_opt, u_opt_ind ] = PolicyIteration( P, G )
 %       	input for each element of the state space.
 
 % put your code here
+[K, L] = size(G);
+
+mu_hat = 5*ones(K,1);
+mu_hat_old = mu_hat*0;
+
+G_hat = zeros(K,1);
+P2 = zeros(K);
+while isequal(mu_hat,mu_hat_old)~=1
+    for k1=1:K
+        G_hat(k1) = G(k1,mu_hat(k1));
+        P2(k1,:) = P(k1,:,mu_hat(k1));
+    end
+    J_mu = (eye(K)-P2)\G_hat;
+
+    mu_hat_old = mu_hat;
+    for k1=1:K
+        J_hat = G(k1,:);
+        for u=1:L
+            for k2=1:K
+                J_hat(u) = J_hat(u)+P(k1,k2,u)*J_mu(k2);
+            end
+        end
+        [~,mu_hat(k1)] = min(J_hat);
+    end
+end
+u_opt_ind = mu_hat;
+J_opt = J_mu;
 
 end
 

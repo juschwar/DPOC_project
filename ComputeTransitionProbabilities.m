@@ -70,7 +70,7 @@ for h=1:H
                 %We have to calculate the probability of not getting caught
                 %by all cameras that see that state and then calculate from
                 %that the probablity of getting caught
-                Pr_gc(m1,n1)=1-(1-Pr_gc(m1,n1))*(1-gamma/(abs(m1-m+n1-n)));
+                Pr_gc(m1,n1)=1.0-(1.0-Pr_gc(m1,n1))*(1.0-gamma/(abs(m1-m+n1-n)));
             end
             %We go one step further in the direction the camera sees
             m1=m1+ofsy(l);
@@ -160,10 +160,10 @@ for k=1:K
             end
             %The probability of getting caught is 1 - the probability of
             %not getting caught over all time steps
-            P(k,gate_idx,l) = 1-(1-Pr_gc(y2,x2))^ts;
+            P(k,gate_idx,l) = 1.0-(1-Pr_gc(y2,x2))^ts;
             %In case the paparazzi does not get caught in the new state, he
             %transists to the new state
-            P(k,idx,l) = P(k,idx,l)+1-P(k,gate_idx,l);
+            P(k,idx,l) = P(k,idx,l)+1.0-P(k,gate_idx,l);
         else
             %In case the paparazzi wants to move n,w,s,e but the way is
             %blocked he stays at the current state. And the probability of
@@ -180,7 +180,7 @@ for k=1:K
     %The Probability of staying at the current state is 1 - the probability
     %of taking a picture and finishing the task - The probability of
     %getting caught.
-    P(k,k,5) = P(k,k,5)+1-max(p_c,Pr_tp(y1,x1))-P(k,gate_idx,5);
+    P(k,k,5) = P(k,k,5)+1.0-max(p_c,Pr_tp(y1,x1))-P(k,gate_idx,5);
 end
 
 
@@ -190,9 +190,9 @@ end
 %to finish the task. As we can transist to the terminal state when we take
 %a picture this does not hold for the control input 5.
 if(sum(sum(P(:,:,1),2).*sum(P(:,:,2),2).*sum(P(:,:,3),2).*sum(P(:,:,4),2)<1)>0)
-    save('errorMap.mat',map);
-    save('errorP.mat',map);
-    save('errorSs.mat',stateSpace);
+    save('errorMap.mat','map');
+    save('errorP.mat','P');
+    save('errorSs.mat','stateSpace');
 end
     
 assert(sum(sum(P(:,:,1),2).*sum(P(:,:,2),2).*sum(P(:,:,3),2).*sum(P(:,:,4),2)<1)==0)
