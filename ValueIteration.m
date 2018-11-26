@@ -47,7 +47,7 @@ while(error>eps)
         end
         [V(k1), u_opt_ind(k1)] = min(V1);
     end
-    [error, I] = max(V-V_old);      
+    [error, I] = max(abs(V-V_old));      
 end
 J_opt = V;
 
