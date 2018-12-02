@@ -43,66 +43,206 @@ function P = ComputeTransitionProbabilities( stateSpace, controlSpace, map, gate
 %           from state i to state j if control input l is applied.
 
 % put your code here
-K = length(stateSpace(:,1));
-L = length(controlSpace(:,1));
-[M, N] = size(map);
-F = length(mansion(:,1));
-H = length(cameras(:,1));
-P = zeros(K,K,L);
-Pr_gc = zeros(M,N);
-for h=1:H
-    n=cameras(h,1);
-    m=cameras(h,2);
-    gamma=cameras(h,3);
-    ind = true;
-    m1=m;
-    while(ind&&m1>1)
-        m1=m1-1;
-        m1
-        n
-        if map(m1,n)>0
-            ind = false;
+global pool_num_time_steps p_c gamma_p
+
+% Probabilities of beeing detected
+Pc = zeros(size(map));
+for i = 1:size(cameras,1)
+    n = cameras(i,1);
+    m = cameras(i,2);
+    quality = cameras(i,3);
+    
+    %west
+    x = map(m,n-1:-1:1)<=0;
+    x = [x(:);0];
+    ii = 1;
+    while(x(ii))
+        if(map(m,n-ii)==0)
+            Pc(m,n-ii) = 1 - ((1 - Pc(m,n-ii)) * (1 - quality/ii));
         else
-            Pr_gc(m1,n)=Pr_gc(m1,n)+gamma/(abs(m1-m));
+            Pc(m,n-ii) = 1 - ((1 - Pc(m,n-ii)) * (1 - quality/ii)^pool_num_time_steps);
         end
+        ii = ii + 1;
     end
-    ind=true;
-    m2=m;
-    while(ind&&m2<M)
-        m2=m2+1;
-        if map(m2,n)>0
-            ind = false;
+    %south
+    x = map(m-1:-1:1,n)<=0;
+    x = [x(:);0];
+    ii = 1;
+    while(x(ii))
+        if(map(m-ii,n)==0)
+            Pc(m-ii,n) = 1 - ((1 - Pc(m-ii,n)) * (1 - quality/ii));
         else
-            Pr_gc(m2,n)=Pr_gc(m2,n)+gamma/(abs(m2-m));
+            Pc(m-ii,n) = 1 - ((1 - Pc(m-ii,n)) * (1 - quality/ii)^4);
         end
+        ii = ii + 1;
     end
-    ind = true;
-    n1=n;
-    while(ind&&n1>1)
-        n1=n1-1;
-        if map(m,n1)>0
-            ind = false;
+    %east
+    x = map(m,n+1:end)<=0;
+    x = [x(:);0];
+    ii = 1;
+    while(x(ii))
+        if(map(m,n+ii)==0)
+            Pc(m,n+ii) = 1 - ((1 - Pc(m,n+ii)) * (1 - quality/ii));
         else
-            Pr_gc(m,n1)=Pr_gc(m,n1)+gamma/(abs(n-n1));
+            Pc(m,n+ii) = 1 - ((1 - Pc(m,n+ii)) * (1 - quality/ii)^4);
         end
+        ii = ii + 1;
     end
-    ind=true;
-    n2=n;
-    while(ind&&n2<N)
-        n2=n2+1;
-        if map(m,n2)>0
-            ind = false;
+    %north
+    x = map(m+1:end,n)<=0;
+    x = [x(:);0];
+    ii = 1;
+    while(x(ii))
+        if(map(m+ii,n)==0)
+            Pc(m+ii,n) = 1 - ((1 - Pc(m+ii,n)) * (1 - quality/ii));
         else
-            Pr_gc(m,n2)=Pr_gc(m,n2)+gamma/(abs(n2-n));
+            Pc(m+ii,n) = 1 - ((1 - Pc(m+ii,n)) * (1 - quality/ii)^4);
         end
+        ii = ii + 1;
     end
     
 end
-bar3(Pr_gc)   
-        
 
-
-
-
-
+% Probabilities of taking a photo
+Pp = zeros(size(map));
+for i = 1:size(mansion,1)
+    n = mansion(i,1);
+    m = mansion(i,2);
+    quality = gamma_p;
+    
+    %west
+    x = map(m,n-1:-1:1)<=0;
+    x = [x(:);0];
+    ii = 1;
+    while(x(ii))
+        Pp(m,n-ii) = max([p_c quality/ii]);
+        ii = ii + 1;
+    end
+    %south
+    x = map(m-1:-1:1,n)<=0;
+    x = [x(:);0];
+    ii = 1;
+   while(x(ii))
+        Pp(m-ii,n) = max([p_c quality/ii]);
+        ii = ii + 1;
+    end
+    %east
+    x = map(m,n+1:end)<=0;
+    x = [x(:);0];
+    ii = 1;
+    while(x(ii))
+        Pp(m,n+ii) = max([p_c quality/ii]);
+        ii = ii + 1;
+    end
+    %north
+    x = map(m+1:end,n)<=0;
+    x = [x(:);0];
+    ii = 1;
+   while(x(ii))
+        Pp(m+ii,n) = max([p_c quality/ii]);
+        ii = ii + 1;
+    end
+    
 end
+
+% build the transition probability Matrix
+K = size(stateSpace,1);
+L = size(controlSpace,1);
+P = zeros(K,K,L);
+
+for i = 1:K
+     from = stateSpace(i,:);
+     [~, idx_gate] = max(stateSpace(:,1)==gate(1) & stateSpace(:,2)==gate(2));
+     
+     % u=n
+     to = from + [0 1];
+     [v_to, idx_to] = max(stateSpace(:,1)==to(1) & stateSpace(:,2)==to(2));
+     if (v_to~=0)
+         if(idx_to ~= idx_gate)
+             P(i,idx_gate,1) = Pc(from(2),from(1));
+             P(i,idx_to,1) = 1-P(i,idx_gate,1);
+         else
+             P(i,idx_to,1) = 1;
+         end
+     else
+         if (i~=idx_gate)
+             P(i,idx_gate,1) = Pc(from(2),from(1));
+             P(i,i,1) = 1-P(i,idx_gate,1);
+         else
+             P(i,idx_gate,1) = 1;
+         end
+     end
+     
+     % u=w
+     to = from + [-1 0];
+     [v_to, idx_to] = max(stateSpace(:,1)==to(1) & stateSpace(:,2)==to(2));
+     if (v_to~=0)
+         if(idx_to ~= idx_gate)
+             P(i,idx_gate,2) = Pc(from(2),from(1));
+             P(i,idx_to,2) = 1-P(i,idx_gate,2);
+         else
+             P(i,idx_to,2) = 1;
+         end
+     else
+         if (i~=idx_gate)
+             P(i,idx_gate,2) = Pc(from(2),from(1));
+             P(i,i,2) = 1-P(i,idx_gate,2);
+         else
+             P(i,idx_gate,2) = 1;
+         end
+     end
+     
+     % u=s
+     to = from + [0 -1];
+     [v_to, idx_to] = max(stateSpace(:,1)==to(1) & stateSpace(:,2)==to(2));
+     if (v_to~=0)
+         if(idx_to ~= idx_gate)
+             P(i,idx_gate,3) = Pc(from(2),from(1));
+             P(i,idx_to,3) = 1-P(i,idx_gate,3);
+         else
+             P(i,idx_to,3) = 1;
+         end
+     else
+         if (i~=idx_gate)
+             P(i,idx_gate,3) = Pc(from(2),from(1));
+             P(i,i,3) = 1-P(i,idx_gate,3);
+         else
+             P(i,idx_gate,3) = 1;
+         end
+     end
+     % u=e
+     to = from + [1 0];
+     [v_to, idx_to] = max(stateSpace(:,1)==to(1) & stateSpace(:,2)==to(2));
+     if (v_to~=0)
+         if(idx_to ~= idx_gate)
+             P(i,idx_gate,4) = Pc(from(2),from(1));
+             P(i,idx_to,4) = 1-P(i,idx_gate,4);
+         else
+             P(i,idx_to,4) = 1;
+         end
+     else
+         if (i~=idx_gate)
+             P(i,idx_gate,4) = Pc(from(2),from(1));
+             P(i,i,4) = 1-P(i,idx_gate,4);
+         else
+             P(i,idx_gate,4) = 1;
+         end
+     end
+     %u=p
+     if (i~=idx_gate)
+         P(i,idx_gate,5) = Pc(from(2),from(1))*(1-Pp(from(2),from(1)));
+         P(i,i,5) = 1.0-Pp(from(2),from(1))-P(i,idx_gate,5);  
+     else
+         P(i,i,5) = 1-Pp(from(2),from(1));
+     end
+     
+end
+% tmp = round(sum(P,2),3)
+% [v, idx] = min(tmp(:,:,5));
+% disp(idx)
+% disp(nnz(tmp(:,:,1)~=1))
+% disp(nnz(tmp(:,:,2)~=1))
+% disp(nnz(tmp(:,:,3)~=1))
+% disp(nnz(tmp(:,:,4)~=1))
+% disp(nnz(tmp(:,:,5)~=1))
+
