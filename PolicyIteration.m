@@ -30,6 +30,38 @@ function [ J_opt, u_opt_ind ] = PolicyIteration( P, G )
 %       	input for each element of the state space.
 
 % put your code here
+K = size(P,1);
+L = size(P,3);
+
+J = zeros(K,1);
+FVal = 5*ones(K,1);
+costToGo = zeros(K,1);
+cost_to_minimize = zeros(K,L);
+Pmu = zeros(K,K);
+Gmu = zeros(K,1);
+
+%err = 1e-5;
+iter = 0;
+
+while(1)
+    for i=1:K
+        Pmu(i,:) = P(i,:,FVal(i));
+        Gmu(i,1) = G(i,FVal(i));
+    end
+    J = (eye(K)-Pmu)\Gmu;
+    
+    iter = iter + 1;
+        for j = 1:L
+            cost_to_minimize(:,j) = G(:,j) + P(:,:,j)*J(:) ;
+        end
+        [costToGo, FVal] = min(cost_to_minimize(:,:),[],2);
+        disp(costToGo)
+        if ( costToGo==J)
+            J_opt = costToGo;
+            u_opt_ind = FVal;
+            break
+        end
 
 end
-
+    
+end

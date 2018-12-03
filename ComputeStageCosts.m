@@ -43,5 +43,80 @@ function G = ComputeStageCosts( stateSpace, controlSpace, map, gate, mansion, ca
 %           apply control input l.
 
 % put your code here
+global p_c gamma_p pool_num_time_steps detected_additional_time_steps
+K = size(stateSpace,1);
+L = size(controlSpace,1);
+P = ComputeTransitionProbabilities( stateSpace, controlSpace, ...
+        map, gate, mansion, cameras );
+[~, idx_gate] = max(stateSpace(:,1)==gate(1) & stateSpace(:,2)==gate(2));
+     
+G = zeros(K,L);
+for i = 1:K
+    n = stateSpace(i,1);
+    m = stateSpace(i,2);
+    % n
+    [v_to, idx_to] = max(stateSpace(:,1)==n & stateSpace(:,2)==m+1);
+    if (v_to~=0)
+        if (map(m+1,n)==0)
+            G(i,1) = P(i,idx_to,1)*1 + ...
+                P(i,idx_gate,1) * (detected_additional_time_steps+1);
+        else
+            G(i,1) = P(i,idx_to,1)*pool_num_time_steps + ...
+                P(i,idx_gate,1) * (pool_num_time_steps + detected_additional_time_steps);
+        end
+    else
+            G(i,1) = P(i,i,1)*1 + ...
+                P(i,idx_gate,1) * (1 + detected_additional_time_steps);
+    end
+    
+    % w
+    [v_to, idx_to] = max(stateSpace(:,1)==n-1 & stateSpace(:,2)==m);
+    if (v_to~=0)
+        if (map(m,n-1)==0)
+            G(i,2) = P(i,idx_to,2)*1 + ...
+                P(i,idx_gate,2) * (detected_additional_time_steps+1);
+        else
+            G(i,2) = P(i,idx_to,2)*pool_num_time_steps + ...
+                P(i,idx_gate,2) * (pool_num_time_steps + detected_additional_time_steps);
+        end
+    else
+            G(i,2) = P(i,i,2)*1 + ...
+                P(i,idx_gate,2) * (1 + detected_additional_time_steps);
+    end
+    
+    % s
+    [v_to, idx_to] = max(stateSpace(:,1)==n & stateSpace(:,2)==m-1);
+    if (v_to~=0)
+        if (map(m-1,n)==0)
+            G(i,3) = P(i,idx_to,3)*1 + ...
+                P(i,idx_gate,3) * (detected_additional_time_steps+1);
+        else
+            G(i,3) = P(i,idx_to,3)*pool_num_time_steps + ...
+                P(i,idx_gate,3) * (pool_num_time_steps + detected_additional_time_steps);
+        end
+    else
+            G(i,3) = P(i,i,3)*1 + ...
+                P(i,idx_gate,3) * (1 + detected_additional_time_steps);
+    end
+    
+    % e
+    [v_to, idx_to] = max(stateSpace(:,1)==n+1 & stateSpace(:,2)==m);
+    if (v_to~=0)
+        if (map(m,n+1)==0)
+            G(i,4) = P(i,idx_to,4)*1 + ...
+                P(i,idx_gate,4) * (detected_additional_time_steps+1);
+        else
+            G(i,4) = P(i,idx_to,4)*pool_num_time_steps + ...
+                P(i,idx_gate,4) * (pool_num_time_steps + detected_additional_time_steps);
+        end
+    else
+            G(i,4) = P(i,i,4)*1 + ...
+                P(i,idx_gate,4) * (1 + detected_additional_time_steps);
+    end
+    
+    %u=p
+    G(i,5) = P(i,i,5)*1 + P(i,idx_gate,5)*(1+detected_additional_time_steps) + ...
+        (1-P(i,i,5)-P(i,idx_gate,5))*1;
+end
 
 end
