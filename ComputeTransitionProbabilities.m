@@ -63,7 +63,7 @@ for h=1:H
         ind = true; %As soon as there is an obstacle, this indicator is set to false
         m1=m+ofsy(l); %We go in y-direction from the camera until an obstacle arives
         n1=n+ofsx(l); %We go in x-direction from the camera until an obstacle arives
-        while(ind&&m1>0&&n1>0&&m1<M+1&&n1<N+1) %We also stop as soon as we reeach the end of the map
+        while(ind&&m1>0&&n1>0&&m1<M+1&&n1<N+1) %We also stop as soon as we reach the end of the map
             if map(m1,n1)>0
                 ind = false; %The indicator is set to false when an obstacle arives
             else
@@ -97,7 +97,7 @@ end
 %Calculation of the probability of taking a picture of celebrity in the
 %mansion. This does not yet include the rare case of taking picture outside
 %of the mansion. This is the same problem that the paparazzi is seen by the
-%mansion and this is the same problem beeing caught by the camera.
+%mansion and this is the same problem as beeing caught by the camera.
 Pr_tp = zeros(M,N);
 %We iterate over every part of the mansion
 for f=1:F
