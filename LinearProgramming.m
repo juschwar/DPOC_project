@@ -31,5 +31,20 @@ function [ J_opt, u_opt_ind ] = LinearProgramming( P, G )
 
 % put your code here
 
+K = size(P,1);
+L = size(P,3);
+A=zeros(K*L,K);
+b=zeros(K*L,1);
+f = -1*ones(K,1);
+for i=1:L
+    A(1+(i-1)*K:K+(i-1)*K,:) = eye(K)-P(:,:,i);
+    b(1+(i-1)*K:K+(i-1)*K,1) = G(:,i);
+end
+J_opt = linprog(f,A,b);
+cost_to_minimize=zeros(K,L);
+for i=1:L
+    cost_to_minimize(:,i) = G(:,i)+P(:,:,i)*J_opt;
+end
+[~,u_opt_ind] = min(cost_to_minimize,[],2);
 end
 

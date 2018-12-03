@@ -33,30 +33,30 @@ function [ J_opt, u_opt_ind ] = PolicyIteration( P, G )
 K = size(P,1);
 L = size(P,3);
 
-J = zeros(K,1);
+Jmu = zeros(K,1);
 FVal = 5*ones(K,1);
 costToGo = zeros(K,1);
 cost_to_minimize = zeros(K,L);
 Pmu = zeros(K,K);
 Gmu = zeros(K,1);
 
-%err = 1e-5;
+err = 1e-5;
 iter = 0;
 
 while(1)
+    Jold = Jmu;
     for i=1:K
         Pmu(i,:) = P(i,:,FVal(i));
         Gmu(i,1) = G(i,FVal(i));
     end
-    J = (eye(K)-Pmu)\Gmu;
+    Jmu = (eye(K)-Pmu)\Gmu;
     
     iter = iter + 1;
         for j = 1:L
-            cost_to_minimize(:,j) = G(:,j) + P(:,:,j)*J(:) ;
+            cost_to_minimize(:,j) = G(:,j) + P(:,:,j)*Jmu(:) ;
         end
         [costToGo, FVal] = min(cost_to_minimize(:,:),[],2);
-        disp(costToGo)
-        if ( costToGo==J)
+        if ( max(abs(Jmu - Jold))<err)
             J_opt = costToGo;
             u_opt_ind = FVal;
             break

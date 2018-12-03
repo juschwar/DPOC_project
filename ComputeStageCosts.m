@@ -50,7 +50,7 @@ P = ComputeTransitionProbabilities( stateSpace, controlSpace, ...
         map, gate, mansion, cameras );
 [~, idx_gate] = max(stateSpace(:,1)==gate(1) & stateSpace(:,2)==gate(2));
      
-G = zeros(K,L);
+G = nan(K,L);
 for i = 1:K
     n = stateSpace(i,1);
     m = stateSpace(i,2);
