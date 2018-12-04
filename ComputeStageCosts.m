@@ -43,14 +43,127 @@ function G = ComputeStageCosts( stateSpace, controlSpace, map, gate, mansion, ca
 %           apply control input l.
 
 % put your code here
-global pool_num_time_steps detected_additional_time_steps
-P = ComputeTransitionProbabilities( stateSpace, controlSpace, ...
-        map, gate, mansion, cameras );
+global pool_num_time_steps detected_additional_time_steps gamma_p p_c
 K = length(stateSpace(:,1));
 L = length(controlSpace(:,1));
 G = zeros(K,L);
 ofsx = [0 -1 0 1];
 ofsy = [1 0 -1 0];
+
+
+
+
+[M, N] = size(map);
+F = length(mansion(:,1));
+H = length(cameras(:,1));
+P1 = zeros(K,K,L);
+P2 = zeros(K,K,L);
+Pr_gc = zeros(M,N);
+
+%Get probability of getting caught by iterating over all cameras
+for h=1:H
+    n=cameras(h,1); %get x-coordinate
+    m=cameras(h,2); %get y-coordinate
+    gamma=cameras(h,3); %get quality of the camera
+    for l=1:4
+        ind = true; %As soon as there is an obstacle, this indicator is set to false
+        m1=m+ofsy(l); %We go in y-direction from the camera until an obstacle arives
+        n1=n+ofsx(l); %We go in x-direction from the camera until an obstacle arives
+        while(ind&&m1>0&&n1>0&&m1<M+1&&n1<N+1) %We also stop as soon as we reach the end of the map
+            if map(m1,n1)>0
+                ind = false; %The indicator is set to false when an obstacle arives
+            else
+                %We have to calculate the probability of not getting caught
+                %by all cameras that see that state and then calculate from
+                %that the probablity of getting caught
+                Pr_gc(m1,n1)=1.0-(1.0-Pr_gc(m1,n1))*(1.0-gamma/(abs(m1-m+n1-n)));
+            end
+            %We go one step further in the direction the camera sees
+            m1=m1+ofsy(l);
+            n1=n1+ofsx(l);
+        end
+    end
+end
+
+
+%Calculation of the probability of taking a picture of celebrity in the
+%mansion. This does not yet include the rare case of taking picture outside
+%of the mansion. This is the same problem that the paparazzi is seen by the
+%mansion and this is the same problem as beeing caught by the camera.
+Pr_tp = zeros(M,N);
+%We iterate over every part of the mansion
+for f=1:F
+    n=mansion(f,1); %x-coordinate of the part of the mansion
+    m=mansion(f,2); %y-coordinate of the part of the mansion
+    gamma=gamma_p;
+    for l=1:4
+        ind = true;
+        n1=n;
+        m1=m;
+        m1=m1+ofsy(l);
+        n1=n1+ofsx(l);
+        while(ind&&m1>0&&n1>0&&m1<M+1&&n1<N+1)
+            if map(m1,n1)>0
+                ind = false;
+            else
+                %It is not possible to be in line of sight with several
+                %parts of the mansion
+                Pr_tp(m1,n1)=gamma/(abs(m1-m+n1-n));
+            end
+            m1=m1+ofsy(l);
+            n1=n1+ofsx(l);
+        end
+    end
+end
+
+
+%Get Index of the gate in stateSpace
+[ind,gate_idx] = max(stateSpace(:,1)==gate(1)&stateSpace(:,2)==gate(2));
+
+for k=1:K
+    x1 = stateSpace(k,1); %x-coordinate of the k-th state
+    y1 = stateSpace(k,2); %y-coordinate of the k-th state
+    for l=1:4
+        %Depending on ofsx and ofsy find the state to the north, west,
+        %south, east. If this state does not exist the ind yields zero, else
+        %one. We get the index idx of the state to the n,w,s,e.
+        [ind,idx] = max(stateSpace(:,1)==x1+ofsx(l)&stateSpace(:,2)==y1+ofsy(l));
+        %We only transist to the state if it exists
+        if(ind)
+            x2 = x1+ofsx(l);
+            y2 = y1+ofsy(l);
+            ts = 1;
+            %If the paparazzi lands in the pool this takes us more time steps
+            if(map(y2,x2)<0)
+                ts = pool_num_time_steps;
+            end
+            %The probability of getting caught is 1 - the probability of
+            %not getting caught over all time steps
+            P2(k,gate_idx,l) = 1.0-(1-Pr_gc(y2,x2))^ts;
+            %In case the paparazzi does not get caught in the new state, he
+            %transists to the new state
+            P1(k,idx,l) = 1.0-P2(k,gate_idx,l);
+        else
+            %In case the paparazzi wants to move n,w,s,e but the way is
+            %blocked he stays at the current state. And the probability of
+            %getting caught is that of the current state.
+            P2(k,gate_idx,l) = 0;%Pr_gc(y1,x1);
+            %If the Paparazzi does not get caught, he just stays at the
+            %current state
+            P1(k,k,l) = 0;%P(k,k,l)+1-P(k,gate_idx,l);
+        end
+    end
+    %In case the paparazzi takes a picture, the probability of getting
+    %caught is that of the current state.
+    P2(k,gate_idx,5) = Pr_gc(y1,x1)*(1-max(p_c,Pr_tp(y1,x1)));
+    %The Probability of staying at the current state is 1 - the probability
+    %of taking a picture and finishing the task - The probability of
+    %getting caught.
+    P1(k,k,5) = +1.0-max(p_c,Pr_tp(y1,x1))-P2(k,gate_idx,5);
+end
+
+
+
 
 [ind,gate_idx] = max(stateSpace(:,1)==gate(1)&stateSpace(:,2)==gate(2));
 
@@ -74,29 +187,29 @@ for k=1:K
             %If we get caught this takes us additional timesteps. As we
             %transist first to another cell before we get caught we also
             %have the timesteps to transist to this next cell
-            G(k,l) = G(k,l)+P(k,gate_idx,l)*(detected_additional_time_steps+ts);
+            G(k,l) = G(k,l)+P2(k,gate_idx,l)*(detected_additional_time_steps+ts);
             %In case the paparazzi does not get caught in the new state,
             %this just takes us the timesteps to transist
-            G(k,l) = G(k,l)+P(k,idx,l)*ts;
+            G(k,l) = G(k,l)+P1(k,idx,l)*ts;
         else
             %In case the paparazzi wants to move n,w,s,e but the way is
             %blocked he stays at the current state. If he gets caught this
             %costs him again some timesteps
-            G(k,l) = G(k,l)+P(k,gate_idx,l)*(detected_additional_time_steps+1);
+            G(k,l) = Inf;%G(k,l)+P(k,gate_idx,l)*(detected_additional_time_steps+1);
             %If the Paparazzi does not get caught, he just stays at the
             %current state and this costs him 1 timestep
-            G(k,l) = G(k,l)+P(k,k,l)*1.0;
+            G(k,l) = Inf;%G(k,l)+P(k,k,l)*1.0;
         end
     end
     %In case the paparazzi takes a picture but the celebrity is not on the
     %picture and he gets caught, this takes him the time to take the photo 
     %plus the time to get to the gate
-    G(k,5) = G(k,5)+P(k,gate_idx,5)*(6+1);
+    G(k,5) = G(k,5)+P2(k,gate_idx,5)*(6+1);
     %If the paparazzi takes a picture but the celebrity is not on the
     %picture but he does not get caught either
-    G(k,5) = G(k,5)+P(k,k,5)*1.0;
+    G(k,5) = G(k,5)+P1(k,k,5)*1.0;
     %If the paparazzi takes successfully a picture
-    G(k,5) = G(k,5)+(1-P(k,k,5)-P(k,gate_idx,5))*1;
+    G(k,5) = G(k,5)+(1-P1(k,k,5)-P2(k,gate_idx,5))*1;
 end
 
 

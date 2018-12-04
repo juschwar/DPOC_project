@@ -31,13 +31,17 @@ function [ J_opt, u_opt_ind ] = LinearProgramming( P, G )
 
 % put your code here
 [K, L] = size(G);
-f = -1*ones(K,1);
 A=zeros(K*L,K);
 b=zeros(K*L,1);
 for u=1:L
     A(1+(u-1)*K:K+(u-1)*K,:) = eye(K)-P(:,:,u);
     b(1+(u-1)*K:K+(u-1)*K,1) = G(:,u);
 end
+idx_b = (b<inf);
+A = A(idx_b,:);
+b = b(idx_b);
+f = -1*ones(K,1);
+
 lb = zeros(K,1);
 Aeq = [];
 beq = [];
@@ -47,4 +51,5 @@ for u=1:L
     c(:,u) = G(:,u)+P(:,:,u)*J_opt;
 end
 [~,u_opt_ind] = min(c.');
+u_opt_ind = u_opt_ind.';
 end
