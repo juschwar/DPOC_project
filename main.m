@@ -28,7 +28,7 @@ detected_additional_time_steps = 6;	% additional time steps if detected and brou
 %% options
 % set to true to generate a randon map of size mapSize, else set to false 
 % to load the pre-exsisting example map
-shouldGenerateMap = false;
+shouldGenerateMap = true;
 mapSize = [ 20, 40 ]; % [N, M]
 
 % set the following to true to test the correponding implementation
@@ -162,4 +162,14 @@ if (linearProgrammingImplemented ...
 end
 
 %% display that terminated
+if ~shouldGenerateMap
+    disp('error to original P and G:');
+    P1 = P;
+    G1 = G;
+    load('examplePG.mat');
+    max(abs(P1-P),[],'all')
+    max(abs(G1-G),[],'all')
+end
+
+
 disp('terminated');

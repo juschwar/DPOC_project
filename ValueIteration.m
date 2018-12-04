@@ -40,10 +40,7 @@ while(error>eps)
     V_old = V;
     for k1=1:K
         for l = 1:L
-            V1(l) = G(k1,l);
-            for k2=1:K
-                V1(l) = V1(l) + P(k1,k2,l)*V(k2);
-            end
+            V1(l) = G(k1,l) + P(k1,:,l)*V(:);
         end
         [V(k1), u_opt_ind(k1)] = min(V1);
     end
