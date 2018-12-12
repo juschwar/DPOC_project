@@ -37,10 +37,9 @@ mu_hat_old = mu_hat*0;
 
 G_hat = zeros(K,1);
 P2 = zeros(K);
-eps = 1e-5;
-error=100;
-J_mu=zeros(K,1);
-while isequal(mu_hat,mu_hat_old)~=1
+error=1e100;
+J_mu=Inf(K,1);
+while error>1e-10%isequal(mu_hat,mu_hat_old)~=1 
     J_mu_old = J_mu;
     for k1=1:K
         G_hat(k1) = G(k1,mu_hat(k1));
@@ -56,7 +55,7 @@ while isequal(mu_hat,mu_hat_old)~=1
         end
         [~,mu_hat(k1)] = min(J_hat);
     end
-    error = max(abs(J_mu-J_mu_old));
+    error = max(J_mu_old-J_mu);
 end
 u_opt_ind = mu_hat;
 J_opt = J_mu;

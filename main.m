@@ -40,7 +40,6 @@ valueIterationImplemented = true;
 policyIterationImplemented = true;
 linearProgrammingImplemented = true;
 
-
 %% define problem size and generate map
 disp('generate map');
 if shouldGenerateMap

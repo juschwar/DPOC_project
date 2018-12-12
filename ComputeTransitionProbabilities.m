@@ -164,14 +164,14 @@ for k=1:K
             %In case the paparazzi does not get caught in the new state, he
             %transists to the new state
             P(k,idx,l) = P(k,idx,l)+1.0-P(k,gate_idx,l);
-        else
-            %In case the paparazzi wants to move n,w,s,e but the way is
-            %blocked he stays at the current state. And the probability of
-            %getting caught is that of the current state.
-            P(k,gate_idx,l) = 0;%Pr_gc(y1,x1);
-            %If the Paparazzi does not get caught, he just stays at the
-            %current state
-            P(k,k,l) = 0;%P(k,k,l)+1-P(k,gate_idx,l);
+%         else
+%             %In case the paparazzi wants to move n,w,s,e but the way is
+%             %blocked he stays at the current state. And the probability of
+%             %getting caught is that of the current state.
+%             P(k,gate_idx,l) = 0;%Pr_gc(y1,x1);
+%             %If the Paparazzi does not get caught, he just stays at the
+%             %current state
+%             P(k,k,l) = 0;%P(k,k,l)+1-P(k,gate_idx,l);
         end
     end
     %In case the paparazzi takes a picture, the probability of getting
